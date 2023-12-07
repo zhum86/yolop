@@ -29,7 +29,7 @@ class YOLOP:
     )
 
     def __init__(self, cfg, opt=None):
-        self.device = torch.device(opt.device if opt else "cpu")
+        self.device = torch.device(opt.device if opt else "cuda")
         self.model = get_net(cfg)
         checkpoint = torch.load(opt.weights if opt else "/yolop/weights/End-to-end.pth", map_location=self.device)
         self.model.load_state_dict(checkpoint["state_dict"])
