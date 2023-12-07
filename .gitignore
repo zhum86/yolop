@@ -1,5 +1,5 @@
 .DS_Store
-# __pycache__/
+__pycache__/
 .idea/
 .tmp/
 .vscode/
@@ -10,4 +10,3 @@ inference/
 *.pt
 *.tar
 *.tar.gz
-tools/inference.py
