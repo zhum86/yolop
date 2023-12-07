@@ -1,6 +1,7 @@
 import argparse
 import os, sys
 import random
+# import time
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -27,13 +28,13 @@ class YOLOP:
         ]
     )
 
-    def __init__(self, cfg, opt):
-        self.device = torch.device(opt.device)
+    def __init__(self, cfg, opt=None):
+        self.device = torch.device(opt.device if opt else "cpu")
         self.model = get_net(cfg)
-        checkpoint = torch.load(opt.weights, map_location=self.device)
+        checkpoint = torch.load(opt.weights if opt else "/yolop/weights/End-to-end.pth", map_location=self.device)
         self.model.load_state_dict(checkpoint["state_dict"])
         self.model.to(self.device)
-        self.img_size = opt.img_size
+        self.img_size = opt.img_size if opt else 640
 
         self.names = (
             self.model.module.names
@@ -47,6 +48,7 @@ class YOLOP:
         self.model.eval()
 
     def detect(self, img_det, od_conf_thres=0.25, od_iou_thres=0.45):
+        # start_time = time.time()
         h0, w0 = img_det.shape[:2]
         # Padded resize
         img, ratio, pad = letterbox_for_img(
@@ -104,6 +106,9 @@ class YOLOP:
         _, ll_seg_mask = torch.max(ll_seg_mask, 1)
         ll_seg_mask = ll_seg_mask.int().squeeze().cpu().numpy()
 
+        # end_time = time.time()
+        # print(f'processing time w/ display: {end_time - start_time:.2f}, fps: {1/(end_time - start_time):.2f}')
+
         img_det = show_seg_result(
             img_det, (da_seg_mask, ll_seg_mask), _, _, is_demo=True
         )
@@ -121,9 +126,11 @@ class YOLOP:
                     color=self.colors[int(cls)],
                     line_thickness=2,
                 )
-
-        cv2.imshow("", img_det)
-        cv2.waitKey()
+        # end_time = time.time()
+        # print(f'processing time: {end_time - start_time:.2f}, fps: {1/(end_time - start_time):.2f}')
+        # cv2.imshow("", img_det)
+        # cv2.waitKey(1)
+        return img_det
 
 
 if __name__ == "__main__":
@@ -132,7 +139,7 @@ if __name__ == "__main__":
         "--weights",
         nargs="+",
         type=str,
-        default="weights/End-to-end.pth",
+        default="/yolop/weights/End-to-end.pth",
         help="model.pth path(s)",
     )
     parser.add_argument("--device", default="cpu", help="cuda or cpu")
